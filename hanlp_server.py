@@ -1,10 +1,12 @@
 from flask import Flask, request, jsonify
 import hanlp
+from pypinyin import lazy_pinyin, Style
+import os
 
 app = Flask(__name__)
 tokenizer = hanlp.load('PKU_NAME_MERGED_SIX_MONTHS_CONVSEG')
 
-API_KEY = "12345678-MVP"
+API_KEY = os.getenv("HANLP_API_KEY")
 
 @app.before_request
 def auth():
@@ -18,6 +20,20 @@ def tokenize():
     sentence = data.get('text', '')
     tokens = tokenizer(sentence)
     return jsonify({"tokens": tokens})
+
+
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    data = request.get_json()
+    sentence = data.get("text", "")
+    tokens = tokenizer(sentence)
+    pinyins = lazy_pinyin(tokens, style=Style.TONE)
+    
+    result = [
+        {"token": token, "pinyin": pinyin}
+        for token, pinyin in zip(tokens, pinyins)
+    ]
+    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5005)
