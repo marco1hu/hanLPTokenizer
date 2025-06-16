@@ -27,12 +27,17 @@ def analyze():
     data = request.get_json()
     sentence = data.get("text", "")
     tokens = tokenizer(sentence)
-    pinyins = lazy_pinyin(tokens, style=Style.TONE)
     
-    result = [
-        {"token": token, "pinyin": pinyin}
-        for token, pinyin in zip(tokens, pinyins)
-    ]
+    result = []
+    for token in tokens:
+        # Calcola il pinyin per ciascun carattere della parola
+        pinyin_list = lazy_pinyin(token, style=Style.TONE)
+        pinyin = ' '.join(pinyin_list)
+        result.append({
+            "token": token,
+            "pinyin": pinyin
+        })
+    
     return jsonify(result)
 
 if __name__ == '__main__':
