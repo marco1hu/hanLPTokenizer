@@ -1,0 +1,8 @@
+# Ignora l'ambiente virtuale
+venv/
+
+# Altri file comuni da ignorare
+__pycache__/
+*.pyc
+.env
+.DS_Store
