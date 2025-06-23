@@ -9,8 +9,6 @@ app = Flask(__name__)
 tokenizer = hanlp.load('PKU_NAME_MERGED_SIX_MONTHS_CONVSEG')
 load_dotenv()
 API_KEY = os.getenv("HANLP_API_KEY")
-
-
 DK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 
 
@@ -28,41 +26,41 @@ def tokenize():
     return jsonify({"tokens": tokens})
 
 
+
 @app.route('/analyze', methods=['POST'])
 def analyze():
     data = request.get_json()
-    sentence = data.get("text", "")
+    sentence = data.get("text", "").strip()
+    if not sentence:
+        return jsonify({"error": "Empty input"}), 400
+
     tokens = tokenizer(sentence)
-    result = []
-    for token in tokens:
-        # Calcola il pinyin per ciascun carattere della parola
-        pinyin_list = lazy_pinyin(token, style=Style.TONE)
-        pinyin = ' '.join(pinyin_list)
-        result.append({
-            "token": token,
-            "pinyin": pinyin,
-            "aa": DK_API_KEY
-        })
-    
-    return jsonify(result)
+    token_string = '\n'.join(tokens)
 
-
-
-
-@app.route('/test', methods=['GET'])
-def test():
     prompt = (
-        "Translate the following Chinese sentence into English:\n"
-        "对于这笔交易，各方都希望尽快完成。尽管马洛塔在周六没有透露太多信息，"
-        "但邦尼确实接近加盟国米，如今只剩一些奖金条款需要进行商谈。帕尔马希望国米能满足2500万欧元的要价，"
-        "球员本人已和国米达成一致，两家俱乐部也非常接近达成协议。\n\n"
-        "Only return the English translation as plain text. No explanation, no JSON, no formatting."
+        f"The following Chinese sentence has already been tokenized into individual words, one per line:\n\n"
+        f"{token_string}\n\n"
+        f"Please do the following:\n"
+        f"1. Translate the entire sentence fluently into natural English.\n"
+        f"2. Then, translate each token one by one, preserving the original order.\n\n"
+        f"For names and places (e.g. '余瑞冬', '哥伦比亚省'), use transliteration or the official translation.\n"
+        f"Do not skip any token. Do not reorder anything.\n"
+        f"Your output must be plain text only, without any headings or labels.\n\n"
+        f"Structure:\n"
+        f"<your English translation here>\n"
+        f"token1: translation1\n"
+        f"token2: translation2\n"
+        f"..."
     )
 
     messages = [
         {
             "role": "system",
-            "content": "You are a linguistic assistant specialized in Chinese. Respond only with plain English translations when asked."
+            "content": (
+                "You are a precise and consistent Chinese-English translation assistant.\n"
+                "You always translate full sentences and provide literal word-by-word translations.\n"
+                "You return only plain text. No formatting, no JSON, no extra headings like 'Full translation:'."
+            )
         },
         {
             "role": "user",
@@ -70,9 +68,35 @@ def test():
         }
     ]
 
-    response_text = chat_with_deepseek(messages)
-    return jsonify({"translation": response_text.strip()})
+    response_text = chat_with_deepseek(messages).strip()
+    lines = response_text.split('\n')
 
+    full_translation = ""
+    token_translations_map = {}
+
+    for line in lines:
+        if not full_translation and ":" not in line and len(line.strip()) > 10:
+            full_translation = line.strip()
+        elif ":" in line:
+            parts = line.split(":", 1)
+            token = parts[0].strip()
+            translation = parts[1].strip()
+            token_translations_map[token] = translation
+
+    token_list = []
+    for idx, token in enumerate(tokens):
+        pinyin = ' '.join(lazy_pinyin(token, style=Style.TONE))
+        token_list.append({
+            "position": idx,
+            "token": token,
+            "pinyin": pinyin,
+            "translation": token_translations_map.get(token, "")
+        })
+
+    return jsonify({
+        "full_translation": full_translation,
+        "token_list": token_list
+    })
 
 
 

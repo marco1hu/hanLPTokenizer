@@ -12,7 +12,7 @@ client = OpenAI(
     base_url="https://api.deepseek.com/v1"
 )
 
-def chat_with_deepseek(messages, model="deepseek-chat", temperature=0.0):
+def chat_with_deepseek(messages, model="deepseek-chat", temperature=0.7):
 
     try:
         response = client.chat.completions.create(
