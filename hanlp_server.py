@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from deepseek_client import chat_with_deepseek
 
 app = Flask(__name__)
-tokenizer = hanlp.load('PKU_NAME_MERGED_SIX_MONTHS_CONVSEG')
+tokenizer = hanlp.load('LARGE_ALBERT_BASE')
 load_dotenv()
 API_KEY = os.getenv("HANLP_API_KEY")
 DK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
