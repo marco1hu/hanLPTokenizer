@@ -35,6 +35,8 @@ def analyze():
         return jsonify({"error": "Empty input"}), 400
 
     tokens = tokenizer(sentence)
+    tokens = [token.strip() for token in tokenizer(sentence)]
+
     token_string = '\n'.join(tokens)
 
     prompt = (
@@ -85,13 +87,15 @@ def analyze():
 
     token_list = []
     for idx, token in enumerate(tokens):
-        pinyin = ' '.join(lazy_pinyin(token, style=Style.TONE))
+        clean_token = token.strip()
+        pinyin = ' '.join(lazy_pinyin(clean_token, style=Style.TONE))
         token_list.append({
             "position": idx,
-            "token": token,
+            "token": clean_token,
             "pinyin": pinyin,
-            "translation": token_translations_map.get(token, "")
+            "translation": token_translations_map.get(clean_token, "")
         })
+
 
     return jsonify({
         "full_translation": full_translation,
