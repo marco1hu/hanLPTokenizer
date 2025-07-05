@@ -1,8 +1,36 @@
-# Ignora l'ambiente virtuale
+# Ambiente virtuale
 venv/
 
-# Altri file comuni da ignorare
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Config e env
 .env
 .DS_Store
+
+# Log e debug
+logs/
+*.log
+
+# Database locale e cache
+instance/
+users.db
+*.sqlite3
+*.db-journal
+
+# Backup e file temporanei
+*.bak
+*.tmp
+*.swp
+*.swo
+*~
+
+# IDE/editor
+.vscode/
+.idea/
+
+# Chiavi/API
+keys/
