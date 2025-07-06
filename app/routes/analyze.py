@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app as app
+from flask import Blueprint, request, jsonify, g, current_app as app
 from ..services.auth import firebase_auth_required
 from ..services.tokenizer import tokenize_text
 from ..services.deepseek_client import chat_with_deepseek
