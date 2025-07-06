@@ -34,3 +34,4 @@ users.db
 
 # Chiavi/API
 keys/
+.env
