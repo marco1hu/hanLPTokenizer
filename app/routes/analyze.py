@@ -3,6 +3,10 @@ from ..services.auth import firebase_auth_required
 from ..services.tokenizer import tokenize_text
 from ..services.deepseek_client import chat_with_deepseek
 from ..services.splitter import split_sentence
+from ..utils.analyze_prompts import get_translation_messages
+from ..services.gpt_client import chat_with_chatgpt
+
+
 
 analyze_bp = Blueprint("analyze", __name__, url_prefix="/analyze")
 
@@ -11,6 +15,8 @@ analyze_bp = Blueprint("analyze", __name__, url_prefix="/analyze")
 def analyze():
     data = request.get_json()
     sentence = data.get("text", "").strip()
+    lang = data.get("lang", "en")
+
     if not sentence:
         return jsonify({"error": "Empty input"}), 400
 
@@ -26,21 +32,8 @@ def analyze():
             if not tokens:
                 continue
 
-            messages = [
-                {"role": "system", "content": "You are a precise Chinese-English translator. Return only plain text. No markdown, no commentary."},
-                {"role": "user", "content": (
-                    f"Sentence: {chunk}\n"
-                    f"Tokens: {tokens}\n\n"
-                    f"Your task:\n"
-                    f"1. Translate the sentence into natural English.\n"
-                    f"2. Then, write each token followed by a colon and its literal translation, one per line.\n\n"
-                    f"Example format:\n"
-                    f"Natural English translation here. (required)\n"
-                    f"token1: translation1\n"
-                    f"token2: translation2\n"
-                    f"...\n"
-                )}
-            ]
+            messages = get_translation_messages(lang=lang, sentence=chunk, tokens=tokens)
+
 
             if g.user.role == "premium":
                 response_text = chat_with_chatgpt(messages, model="gpt-4o", temperature=0.7).strip()
